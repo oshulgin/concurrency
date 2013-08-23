@@ -10,8 +10,8 @@
 
 using namespace std;
 
-const int NUMBER_OF_NODES = 20;
-const int NUMBER_OF_THREADS = 4;
+const int NUMBER_OF_NODES = 30;
+const int NUMBER_OF_THREADS = 10;
 const int KEY_LEN = 5;
 Tree myTree;
 
@@ -21,6 +21,8 @@ void* valueArray[NUMBER_OF_NODES];
 string gen_random_key();
 void* gen_random_value();
 void* fill_tree(void* arg);
+void* show_elements(void* arg);
+void* del_element(void* arg);
 
 
 
@@ -47,7 +49,7 @@ int main() {
 
     //filling tree
     for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
-    	cout << "main: " << "number of thread: " << i << endl;
+    	cout << "main_fill: " << "number of thread: " << i << endl;
     	s = pthread_create(thread + i, NULL, fill_tree, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
     	if ( s != 0 ) {
     		cerr << "Create thread error" << endl;
@@ -63,34 +65,96 @@ int main() {
 
     //searching every value from array in a tree before deleting
     cout << "-----------tree before deleting-------------" << endl;
-    for ( int i = 0; i < NUMBER_OF_NODES; i++ ) {
-     	if ( search(myTree, keyArray[i]) ) {
-     		cout << *((int*)search(myTree, keyArray[i])) << endl;
-     	}
-     }
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	cout << "main_show_before_del: " << "number of thread: " << i << endl;
+    	s = pthread_create(thread + i, NULL, show_elements, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
+    	if ( s != 0 ) {
+    		cerr << "Create thread error" << endl;
+    	}
+    }
 
-    //Delete every third value
-    for ( int i = 0; i < NUMBER_OF_NODES; i += 2 ) {
-     	del(myTree, keyArray[i]);
-     }
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	s = pthread_join(thread[i], NULL);
+    	if ( s != 0 ) {
+    		cerr << "Join thread error" << endl;
+    	}
+    }
+
+//    //Delete every third value
+//    for ( int i = 0; i < NUMBER_OF_NODES; i += 3 ) {
+//     	del(myTree, keyArray[i]);
+//     }
+
+    //Delete all elements
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	cout << "main_del: " << "number of thread: " << i << endl;
+    	s = pthread_create(thread + i, NULL, del_element, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
+    	if ( s != 0 ) {
+    		cerr << "Create thread error" << endl;
+    	}
+    }
+
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	s = pthread_join(thread[i], NULL);
+    	if ( s != 0 ) {
+    		cerr << "Join thread error" << endl;
+    	}
+    }
 
     cout << "-----------tree after deleting every third element-------------" << endl;
-    for ( int i = 0; i < NUMBER_OF_NODES; i++ ) {
-     	if ( search(myTree, keyArray[i]) ) {
-     		cout << *((int*)search(myTree, keyArray[i])) << endl;
-     	}
-     }
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	cout << "main_show_after_del: " << "number of thread: " << i << endl;
+    	s = pthread_create(thread + i, NULL, show_elements, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
+    	if ( s != 0 ) {
+    		cerr << "Create thread error" << endl;
+    	}
+    }
+
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	s = pthread_join(thread[i], NULL);
+    	if ( s != 0 ) {
+    		cerr << "Join thread error" << endl;
+    	}
+    }
     cout << "End!!!" << endl;
 	exit(EXIT_SUCCESS);
 }
 
+
+/****************Functions****************************/
+/*****************************************************/
+
 void* fill_tree(void* arg) {
 	int node_number = *((int*)arg);
-	cout << "In fill function: " << endl;
+	//cout << "In fill function: " << endl;
 	for ( int i = 0; i < (NUMBER_OF_NODES / NUMBER_OF_THREADS); i++ ) {
-		cout << "addind node #" << node_number + i << endl;
-		cout << "Adding: " << keyArray[node_number + i] << endl;
+		//cout << "addind node #" << node_number + i << endl;
+		//cout << "Adding: " << keyArray[node_number + i] << endl;
 		add(myTree, keyArray[node_number + i], valueArray[node_number + i]);
+	}
+	return NULL;
+}
+
+void* show_elements(void* arg) {
+	int node_number = *((int*)arg);
+//	cout << "In show function: " << endl;
+	for ( int i = 0; i < (NUMBER_OF_NODES / NUMBER_OF_THREADS); i++ ) {
+//		cout << "searching node #" << node_number + i << endl;
+//		cout << "searching: " << keyArray[node_number + i] << endl;
+		if ( search(myTree, keyArray[i]) ) {
+			cout << *((int*)search(myTree, keyArray[i])) << endl;
+		}
+	}
+	return NULL;
+}
+
+void* del_element(void* arg) {
+	int node_number = *((int*)arg);
+	//cout << "In fill function: " << endl;
+	for ( int i = 0; i < (NUMBER_OF_NODES / NUMBER_OF_THREADS); i++ ) {
+		//cout << "Delete node #" << node_number + i << endl;
+		//cout << "Deleting: " << keyArray[node_number + i] << endl;
+		del(myTree, keyArray[node_number + i]);
 	}
 	return NULL;
 }
