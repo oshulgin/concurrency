@@ -10,8 +10,8 @@
 
 using namespace std;
 
-const int NUMBER_OF_NODES = 100;
-const int NUMBER_OF_THREADS = 10;
+const int NUMBER_OF_NODES = 20;
+const int NUMBER_OF_THREADS = 4;
 const int KEY_LEN = 5;
 Tree myTree;
 
@@ -48,7 +48,7 @@ int main() {
     //filling tree
     for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
     	cout << "main: " << "number of thread: " << i << endl;
-    	s = pthread_create(thread + i, NULL, fill_tree, argList + i);
+    	s = pthread_create(thread + i, NULL, fill_tree, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
     	if ( s != 0 ) {
     		cerr << "Create thread error" << endl;
     	}
@@ -70,7 +70,7 @@ int main() {
      }
 
     //Delete every third value
-    for ( int i = 0; i < NUMBER_OF_NODES; i += 3 ) {
+    for ( int i = 0; i < NUMBER_OF_NODES; i += 2 ) {
      	del(myTree, keyArray[i]);
      }
 
@@ -85,10 +85,13 @@ int main() {
 }
 
 void* fill_tree(void* arg) {
+	int node_number = *((int*)arg);
 	cout << "In fill function: " << endl;
-	cout << "Thread number: " << *((int*)arg) << endl;
-	cout << "Adding: " << keyArray[*((int*)arg)] << endl;
-	add(myTree, keyArray[*((int*)arg)], valueArray[*((int*)arg)]);
+	for ( int i = 0; i < (NUMBER_OF_NODES / NUMBER_OF_THREADS); i++ ) {
+		cout << "addind node #" << node_number + i << endl;
+		cout << "Adding: " << keyArray[node_number + i] << endl;
+		add(myTree, keyArray[node_number + i], valueArray[node_number + i]);
+	}
 	return NULL;
 }
 
