@@ -20,7 +20,7 @@ void Tree::add(const string& k, void* v) {
 	Node* parent;
 	parent = NULL;
 
-	cout << "Adding: " << k << endl;
+	//cout << "Adding: " << k << endl;
   // is this a new tree?
   if( isEmpty() ) {
 	  root = temp;

@@ -10,8 +10,8 @@
 
 using namespace std;
 
-const int NUMBER_OF_NODES = 10;
-const int NUMBER_OF_THREADS = 3;
+const int NUMBER_OF_NODES = 100;
+const int NUMBER_OF_THREADS = 10;
 const int KEY_LEN = 5;
 Tree myTree;
 
@@ -29,6 +29,10 @@ int main() {
 	srand (time(NULL));
 	initialize(myTree);
 	pthread_t thread[NUMBER_OF_THREADS];
+	int argList[NUMBER_OF_NODES];
+	for ( int i = 0; i < NUMBER_OF_NODES; i++ ) {
+		argList[i] = i;
+	}
 
 	 //generating arrays randomly
     for (int i = 0; i < NUMBER_OF_NODES; ++i) {
@@ -42,15 +46,22 @@ int main() {
     }
 
     //filling tree
-    for ( int i = 0; i < NUMBER_OF_NODES; i++ ) {
-    	cout << "main: " << i << " - loop; " << "number of thread: " << (i % NUMBER_OF_THREADS) << endl;
-    	s = pthread_create(&(thread[i % NUMBER_OF_THREADS]), NULL, fill_tree, &i);
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	cout << "main: " << "number of thread: " << i << endl;
+    	s = pthread_create(thread + i, NULL, fill_tree, argList + i);
     	if ( s != 0 ) {
     		cerr << "Create thread error" << endl;
     	}
     }
 
-//    searching every value from array in a tree before deleting
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	s = pthread_join(thread[i], NULL);
+    	if ( s != 0 ) {
+    		cerr << "Join thread error" << endl;
+    	}
+    }
+
+    //searching every value from array in a tree before deleting
     cout << "-----------tree before deleting-------------" << endl;
     for ( int i = 0; i < NUMBER_OF_NODES; i++ ) {
      	if ( search(myTree, keyArray[i]) ) {
@@ -74,7 +85,9 @@ int main() {
 }
 
 void* fill_tree(void* arg) {
-	cout << "In fill function" << endl;
+	cout << "In fill function: " << endl;
+	cout << "Thread number: " << *((int*)arg) << endl;
+	cout << "Adding: " << keyArray[*((int*)arg)] << endl;
 	add(myTree, keyArray[*((int*)arg)], valueArray[*((int*)arg)]);
 	return NULL;
 }
