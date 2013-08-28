@@ -34,14 +34,14 @@ void Tree::add(Node** node, const string& k, void* v) {
 
 	int s = pthread_mutex_lock(&((*node)->mutex));
 	if (s != 0) {
-		cerr << "mutex_lock_error";
+		cerr << "Adding: mutex_lock_error";
 	}
 
 	if (k == (*node)->key) {
 		(*node)->value = v;
 		int s = pthread_mutex_unlock(&((*node)->mutex));
 		if (s != 0) {
-			cerr << "mutex_lock_error";
+			cerr << "Adding: mutex_unlock_error";
 		}
 		return;
 	}
@@ -49,7 +49,7 @@ void Tree::add(Node** node, const string& k, void* v) {
 	if (k > (*node)->key) {
 		int s = pthread_mutex_unlock(&((*node)->mutex));
 		if (s != 0) {
-			cerr << "mutex_lock_error";
+			cerr << "Adding: mutex_unlock_error";
 		}
 		add(&((*node)->right), k, v);
 	}
@@ -57,7 +57,7 @@ void Tree::add(Node** node, const string& k, void* v) {
 	if (k < (*node)->key) {
 		int s = pthread_mutex_unlock(&((*node)->mutex));
 		if (s != 0) {
-			cerr << "mutex_lock_error";
+			cerr << "Adding: mutex_unlock_error";
 		}
 		add(&((*node)->left), k, v);
 	}
@@ -71,139 +71,82 @@ void* Tree::search(Node* node, const std::string& k) {
 
 	int s = pthread_mutex_lock(&(node->mutex));
 	if (s != 0) {
-		cerr << "mutex_lock_error\n";
+		cerr << "Searching: mutex_lock_error\n";
 	}
 
 	if (k == node->key) {
 		int s = pthread_mutex_unlock(&(node->mutex));
 		if (s != 0) {
-			cerr << "mutex_unlock_error\n";
+			cerr << "Searching: mutex_unlock_error\n";
 		}
 		return node->value; }
 	else {
 		if (k < node->key) {
 			int s = pthread_mutex_unlock(&(node->mutex));
 			if (s != 0) {
-				cerr << "mutex_unlock_error\n";
+				cerr << "Searching: mutex_unlock_error\n";
 			}
 			return search(node->left, k);
 		}
 		else {
 			int s = pthread_mutex_unlock(&(node->mutex));
 			if (s != 0) {
-				cerr << "mutex_unlock_error\n";
+				cerr << "Searching: mutex_unlock_error\n";
 			}
 			return search(node->right, k);
 		}
 	}
 }
 
-void Tree::del(const string& k) {
-    //Locate the element
-    bool found = false;
-    if( isEmpty() ) {
-        cout << " This Tree is empty! " << endl;
-        return;
-    }
+void Tree::del(Node* node, const string& k) {
+	if(node == NULL) { return; }
 
-    Node* curr;
-    Node* parent;
-    curr = root;
-    while(curr != NULL) {
-     if(curr->key == k) {
-     found = true;
-     break;
-     } else {
-     parent = curr;
-     if ( k > curr->key ) {
-     curr = curr->right;
-     } else {
-     curr = curr->left;
-     }
-     }
-    }
-    if(!found) {
-        //cout << "Deleting... key "<< k << " is not found! "<<endl;
-        return;
-    }
+	int s = pthread_mutex_lock(&(node->mutex));
+	if (s != 0) {
+		cerr << "Deleting: mutex_lock_error\n";
+	}
 
-// 3 cases :
-    // 1. We're removing a leaf node
-    // 2. We're removing a node with a single child
-    // 3. we're removing a node with 2 children
+	if(k == node->key) {
+		Node* tmp;
+		if(node->left == NULL) {
+			tmp = node->right;
+			delete node;
+			node = tmp;
+			return;
+		} else if ( node->right == NULL ) {
+			tmp = node->left;
+			delete node;
+			node = tmp;
+			return;
+		}
+		else {
+			Node* min = getMin(node->left);
+			node->key = min->key;
+			del(min, min->key);
+		}
+	} else if(k < node->key) {
+		int s = pthread_mutex_unlock(&(node->mutex));
+		if (s != 0) {
+			cerr << "Deleting: mutex_unlock_error\n";
+		}
+		del(node->left, k);
+	} else {
+		int s = pthread_mutex_unlock(&(node->mutex));
+		if (s != 0) {
+			cerr << "Deleting: mutex_unlock_error\n";
+		}
+		del(node->right, k);
+	}
+	s = pthread_mutex_unlock(&(node->mutex));
+	if (s != 0) {
+		cerr << "Deleting: mutex_unlock_error\n";
+	}
+}
 
-    // Node with single child
-    if ( (curr->left == NULL && curr->right != NULL) || (curr->left != NULL && curr->right == NULL) ) {
-     if(curr->left == NULL && curr->right != NULL) {
-     if(parent->left == curr) {
-     parent->left = curr->right;
-     delete curr;
-     } else {
-     parent->right = curr->right;
-     delete curr;
-     }
-     }
-     else // left child present, no right child
-     {
-     if( parent->left == curr ) {
-     parent->left = curr->left;
-     delete curr;
-     } else {
-     parent->right = curr->left;
-     delete curr;
-     }
-     }
-     return;
-    }
-
-//We're looking at a leaf node
-    if( curr->left == NULL && curr->right == NULL) {
-     if(parent->left == curr) {
-     parent->left = NULL;
-     } else {
-     parent->right = NULL;
-     }
-     delete curr;
-     return;
-    }
-
-    //Node with 2 children
-    // replace node with smallest value in right subtree
-    if (curr->left != NULL && curr->right != NULL) {
-     Node* chkr;
-     chkr = curr->right;
-     if ( (chkr->left == NULL ) && ( chkr->right == NULL) ) {
-     curr = chkr;
-     delete chkr;
-     curr->right = NULL;
-     } else {	// right child has children
-            //if the node's right child has a left child
-            // Move all the way down left to locate smallest element
-
-     if ( (curr->right)->left != NULL ) {
-     Node* lcurr;
-                Node* lcurrp;
-                lcurrp = curr->right;
-                lcurr = (curr->right)->left;
-                while( lcurr->left != NULL ) {
-                 lcurrp = lcurr;
-                 lcurr = lcurr->left;
-                }
-curr->key = lcurr->key;
-curr->value = lcurr->value;
-                delete lcurr;
-                lcurrp->left = NULL;
-           } else {
-         Node* tmp;
-               tmp = curr->right;
-               curr->key = tmp->key;
-               curr->value = tmp->value;
-curr->right = tmp->right;
-               delete tmp;
-           }
-     }
-     return;
-    }
+Node* Tree::getMin(Node* node) {
+	while(node->left != NULL)
+		node = node->left;
+	return node;
 }
 
 //---------------------------------General functions-------------------------------
@@ -216,7 +159,7 @@ void add(Tree& tree, const std::string& key, void* value) {
 }
 
 void del(Tree& tree, const std::string& key) {
-	tree.del(key);
+	tree.del(tree.root, key);
 }
 
 void* search(Tree& tree, const std::string& k) {

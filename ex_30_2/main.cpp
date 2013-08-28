@@ -78,27 +78,22 @@ int main() {
     	}
     }
 
-    //Delete every third value
-    for ( int i = 0; i < NUMBER_OF_NODES; i += 3 ) {
-     	del(myTree, keyArray[i]);
-     }
+//    Delete all elements
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+     	s = pthread_create(thread + i, NULL, del_element, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
+    	if ( s != 0 ) {
+    		cerr << "Create thread error" << endl;
+    	}
+    }
 
-    //Delete all elements
-//    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
-//     	s = pthread_create(thread + i, NULL, del_element, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
-//    	if ( s != 0 ) {
-//    		cerr << "Create thread error" << endl;
-//    	}
-//    }
-//
-//    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
-//    	s = pthread_join(thread[i], NULL);
-//    	if ( s != 0 ) {
-//    		cerr << "Join thread error" << endl;
-//    	}
-//    }
+    for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
+    	s = pthread_join(thread[i], NULL);
+    	if ( s != 0 ) {
+    		cerr << "Join thread error" << endl;
+    	}
+    }
 
-    cout << "-----------tree after deleting every third element-------------" << endl;
+    cout << "-----------tree after deleting every element-------------" << endl;
     for ( int i = 0; i < NUMBER_OF_THREADS; i++ ) {
     	s = pthread_create(thread + i, NULL, show_elements, &argList[i * NUMBER_OF_NODES / NUMBER_OF_THREADS]);
     	if ( s != 0 ) {

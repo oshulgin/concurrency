@@ -18,8 +18,8 @@ struct Node {
 struct Tree {
 	Node* root;
 	void add(Node** node, const std::string& k, void* v);
-	void del(const std::string& k);
-	bool isEmpty() const { return root == NULL; }
+	void del(Node* node, const std::string& k);
+	Node* getMin(Node* node);
 	void* search(Node* node, const std::string& k);
 };
 
